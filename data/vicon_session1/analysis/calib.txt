@@ -1,0 +1,51 @@
+============================================================
+TRAJECTORY COMPARISON REPORT
+============================================================
+
+Task: task1
+Condition: condA
+Vicon: data/vicon_session1/calib/trajectories/vicon/task1_condA_trial1.npy
+RealSense: data/vicon_session1/calib/trajectories/realsense/task1_condA_trial1.npy
+Tolerance: 5.0 mm
+
+------------------------------------------------------------
+SYNC & ALIGNMENT
+------------------------------------------------------------
+Sync: time (Vicon interpolated at RealSense sample times)
+Lag added to RealSense stamps: -380.0 ms (estimated (search +-500 ms))
+Samples used: 1948 of 1963 (9 predicted excluded)
+Alignment: rigid transform fitted on THIS trial (self-aligned: optimistic - use a calibration trial for the report)
+Rotation 50.00 deg, translation 2.1196 m
+
+------------------------------------------------------------
+ACCURACY
+------------------------------------------------------------
+RMSE: 30.23 mm (n=1948)
+Mean Error: 19.35 mm
+Std Error: 23.23 mm
+Median Error: 13.32 mm
+p95 Error: 60.92 mm
+Max Error: 409.11 mm
+
+------------------------------------------------------------
+COVERAGE
+------------------------------------------------------------
+Coverage measured: 98.9 %
+Coverage with prediction: 98.9 %
+Max gap (with prediction): 1467 ms
+Uninterrupted: NO
+
+------------------------------------------------------------
+ROBUSTNESS (per-sample)
+------------------------------------------------------------
+Success Rate: 7.4%
+Failures: 1804
+
+------------------------------------------------------------
+STATISTICS
+------------------------------------------------------------
+one-sided one-sample t-test, H1: mean error < tolerance
+t-statistic: 27.2526
+p-value: 1.000000
+Cohen's d: -0.6175
+Within Tolerance: NO

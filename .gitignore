@@ -1,0 +1,43 @@
+# Python virtualenv (2 GB, rebuilt by scripts/setup_new_vm.sh)
+venv/
+__pycache__/
+*.pyc
+
+# Raw trial rosbags (~GBs) - too big for git; back them up to an external drive
+# (bag folders only: the small *_corner.npz / corner_transform*.npz fits next to them are kept)
+data/bags/*/
+data/**/bags/*/
+
+# Generated analysis outputs - re-creatable from trajectories via batch_analysis.py
+data/figures/
+data/analysis/
+
+# ROS / tooling noise
+*.log
+.vscode/
+.idea/
+
+# Keep: data/trajectories/**, demos/** (irreplaceable recordings),
+#       requirements-venv.lock, config/, docs/, Docs/
+
+# Local only, not published: UTS assessment documents, the submitted proposal, old notes and scratch files
+Docs/
+View/
+archive/
+START_HERE.md
+SETUP_READY.md
+python_packages.txt
+docs/CAPSTONE_PLAN.md
+docs/COMMANDS.sh
+docs/FINAL_SUMMARY.txt
+docs/PROJECT_STATUS.md
+docs/README_QUICK.md
+docs/REALSENSE_SETUP.md
+docs/TODO_WEEK7.md
+docs/WEEK7_SETUP_SUMMARY.md
+docs/report_outline.md
+scripts/install_vietnamese_ime.sh
+
+# Report text: kept locally only, never published (Turnitin). Backed up separately.
+docs/report/*.md
+docs/report/appendix/F_per_trial.md

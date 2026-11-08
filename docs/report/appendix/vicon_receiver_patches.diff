@@ -1,0 +1,102 @@
+diff --git a/vicon_receiver/src/vicon_receiver/communicator.cpp b/vicon_receiver/src/vicon_receiver/communicator.cpp
+index 46eab78..0815641 100644
+--- a/vicon_receiver/src/vicon_receiver/communicator.cpp
++++ b/vicon_receiver/src/vicon_receiver/communicator.cpp
+@@ -1,4 +1,5 @@
+ #include "vicon_receiver/communicator.hpp"
++#include <cctype>
+ 
+ using namespace ViconDataStreamSDK::CPP;
+ 
+@@ -19,7 +20,8 @@ bool Communicator::connect()
+     string msg = "Connecting to " + hostname + " ...";
+     cout << msg << endl;
+     int counter = 0;
+-    while (!vicon_client.IsConnected().Connected)
++    // rclcpp::ok(): without it Ctrl+C is ignored while the Vicon PC is unreachable
++    while (rclcpp::ok() && !vicon_client.IsConnected().Connected)
+     {
+         bool ok = (vicon_client.Connect(hostname).Result == Result::Success);
+         if (!ok)
+@@ -77,7 +79,24 @@ void Communicator::get_frame()
+ 
+     unsigned int subject_count = vicon_client.GetSubjectCount().SubjectCount;
+ 
+-    map<string, Publisher>::iterator pub_it;
++    // publish on ns/subject/segment, creating the publisher on first sight
++    auto send = [this](PositionStruct & position)
++    {
++        boost::mutex::scoped_try_lock lock(mutex);
++        if (!lock.owns_lock())
++            return;
++        auto pub_it = pub_map.find(position.subject_name + "/" + position.segment_name);
++        if (pub_it != pub_map.end())
++        {
++            if (pub_it->second.is_ready)
++                pub_it->second.publish(position);
++        }
++        else
++        {
++            lock.unlock();
++            create_publisher(position.subject_name, position.segment_name);
++        }
++    };
+ 
+     for (unsigned int subject_index = 0; subject_index < subject_count; ++subject_index)
+     {
+@@ -110,29 +129,33 @@ void Communicator::get_frame()
+             current_position.translation_type = "Global";
+             current_position.frame_number = frame_number.FrameNumber;
+ 
+-            // send position to publisher
+-            boost::mutex::scoped_try_lock lock(mutex);
++            send(current_position);
++        }
+ 
+-            if (lock.owns_lock())
+-            {
+-                // get publisher
+-                pub_it = pub_map.find(subject_name + "/" + segment_name);
+-                if (pub_it != pub_map.end())
+-                {
+-                    Publisher & pub = pub_it->second;
+-
+-                    if (pub.is_ready)
+-                    {
+-                        pub.publish(current_position);
+-                    }
+-                }
+-                else
+-                {
+-                    // create publisher if not already available
+-                    lock.unlock();
+-                    create_publisher(subject_name, segment_name);
+-                }
+-            }
++        // Also publish every labeled marker of the subject on
++        // ns/subject/marker_<name>: the object pose alone gives the centroid,
++        // not where each marker (e.g. each board corner) is.
++        unsigned int marker_count = vicon_client.GetMarkerCount(subject_name).MarkerCount;
++        for (unsigned int marker_index = 0; marker_index < marker_count; ++marker_index)
++        {
++            string marker_name = vicon_client.GetMarkerName(subject_name, marker_index).MarkerName;
++            Output_GetMarkerGlobalTranslation mt =
++                vicon_client.GetMarkerGlobalTranslation(subject_name, marker_name);
++            for (char & ch : marker_name)  // topic-safe: Tracker names may contain spaces
++                if (!isalnum(static_cast<unsigned char>(ch)))
++                    ch = '_';
++
++            PositionStruct marker_position;
++            for (size_t i = 0; i < 3; i++)
++                marker_position.translation[i] = mt.Occluded ? 0.0 : mt.Translation[i];
++            marker_position.rotation[0] = marker_position.rotation[1] = marker_position.rotation[2] = 0.0;
++            marker_position.rotation[3] = 1.0;
++            marker_position.segment_name = "marker_" + marker_name;
++            marker_position.subject_name = subject_name;
++            marker_position.translation_type = "Global";
++            marker_position.frame_number = frame_number.FrameNumber;
++
++            send(marker_position);
+         }
+     }
+ }
